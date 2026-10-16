@@ -1,6 +1,5 @@
 {
   "_note": "Curated inputs for report.py. Every item carries a source and a confidence flag. 'verify' means the figure came from secondary knowledge and must be checked against the cited source before publication. Edit this file to update figures; no code changes needed.",
-
   "benchmarks": {
     "tdc_per_subsidized_unit": 512000,
     "public_subsidy_share": 0.5,
@@ -8,78 +7,271 @@
     "months_added_per_layer": 4,
     "carry_cost_per_layer_per_unit": 20000,
     "pipeline_savings_per_month_saved": 3600000,
-    "units_from_25pct_permitting_cut": [600, 700],
+    "units_from_25pct_permitting_cut": [
+      600,
+      700
+    ],
     "hard_cost_share_of_tdc": 0.65,
     "annual_cost_escalation": 0.04,
     "tdc_to_gap_pass_through": 0.65,
     "ri_population_2020_census": 1097379,
     "_source": "GDG Providence AI Lab for Housing materials; RIPEC (2026). Hard-cost share, escalation, and pass-through are planning assumptions."
   },
-
   "funding_sources": [
-    {"name": "2024 Housing & Community Opportunity Bond (Question 3)", "level": "State", "amount_usd": 120000000, "year": 2024,
-     "use": "Production, preservation, homeownership, site acquisition, community revitalization",
-     "source": "https://www.elections.ri.gov/ (Nov 2024 ballot results)", "confidence": "high"},
-    {"name": "2021 Housing & Community Opportunity Bond (Question 3)", "level": "State", "amount_usd": 65000000, "year": 2021,
-     "use": "Affordable rental and homeownership production", "source": "https://www.elections.ri.gov/ (Mar 2021 special election)", "confidence": "high"},
-    {"name": "ARPA State Fiscal Recovery Fund housing allocation", "level": "Federal via State", "amount_usd": 250000000, "year": 2022,
-     "use": "Development subsidies, site acquisition, homelessness, down-payment assistance (obligation deadline Dec 2024)",
-     "source": "https://pandemicrecovery.ri.gov/", "confidence": "verify"},
-    {"name": "Housing Production Fund (HPF)", "level": "State (RIHousing)", "amount_usd": null, "year": null,
-     "use": "Flexible gap financing; partly funded by the real estate conveyance tax on high-value sales (2023 change)",
-     "source": "https://www.rihousing.com/", "confidence": "verify"},
-    {"name": "Federal 9% / 4% LIHTC", "level": "Federal (IRC §42)", "amount_usd": null, "year": null,
-     "use": "Equity for rental production; state ceiling set per capita, allocated through RIHousing's QAP",
-     "source": "https://www.rihousing.com/qualified-allocation-plan/", "confidence": "high"},
-    {"name": "HOME and National Housing Trust Fund", "level": "Federal (HUD)", "amount_usd": null, "year": null,
-     "use": "Gap financing; HTF reserved for ≤30% AMI units",
-     "source": "https://www.hud.gov/program_offices/comm_planning/home", "confidence": "high"},
-    {"name": "State operating budget: Department of Housing / Housing Resources", "level": "State", "amount_usd": null, "year": null,
-     "use": "Annual appropriation; fill in from the enacted budget or run with --ai to look it up",
-     "source": "https://omb.ri.gov/budget", "confidence": "fill-in"}
+    {
+      "name": "2024 Housing & Community Opportunity Bond (Question 3)",
+      "level": "State",
+      "amount_usd": 120000000,
+      "year": 2024,
+      "use": "Production, preservation, homeownership, site acquisition, community revitalization",
+      "source": "https://www.elections.ri.gov/ (Nov 2024 ballot results)",
+      "confidence": "high"
+    },
+    {
+      "name": "2021 Housing & Community Opportunity Bond (Question 3)",
+      "level": "State",
+      "amount_usd": 65000000,
+      "year": 2021,
+      "use": "Affordable rental and homeownership production",
+      "source": "https://www.elections.ri.gov/ (Mar 2021 special election)",
+      "confidence": "high"
+    },
+    {
+      "name": "ARPA State Fiscal Recovery Fund housing allocation",
+      "level": "Federal via State",
+      "amount_usd": 250000000,
+      "year": 2022,
+      "use": "Development subsidies, site acquisition, homelessness, down-payment assistance (obligation deadline Dec 2024)",
+      "source": "https://pandemicrecovery.ri.gov/",
+      "confidence": "verify"
+    },
+    {
+      "name": "Housing Production Fund (HPF)",
+      "level": "State (RIHousing)",
+      "amount_usd": null,
+      "year": null,
+      "use": "Flexible gap financing; partly funded by the real estate conveyance tax on high-value sales (2023 change)",
+      "source": "https://www.rihousing.com/",
+      "confidence": "verify"
+    },
+    {
+      "name": "Federal 9% / 4% LIHTC",
+      "level": "Federal (IRC §42)",
+      "amount_usd": null,
+      "year": null,
+      "use": "Equity for rental production; state ceiling set per capita, allocated through RIHousing's QAP",
+      "source": "https://www.rihousing.com/qualified-allocation-plan/",
+      "confidence": "high"
+    },
+    {
+      "name": "HOME and National Housing Trust Fund",
+      "level": "Federal (HUD)",
+      "amount_usd": null,
+      "year": null,
+      "use": "Gap financing; HTF reserved for ≤30% AMI units",
+      "source": "https://www.hud.gov/program_offices/comm_planning/home",
+      "confidence": "high"
+    },
+    {
+      "name": "State operating budget: Department of Housing / Housing Resources",
+      "level": "State",
+      "amount_usd": null,
+      "year": null,
+      "use": "Annual appropriation; fill in from the enacted budget or run with --ai to look it up",
+      "source": "https://omb.ri.gov/budget",
+      "confidence": "fill-in"
+    }
   ],
-
   "laws": [
-    {"id": "comprehensive_permit", "name": "Low and Moderate Income Housing Act (R.I. Gen. Laws ch. 45-53)",
-     "affects": "production", "mechanism": "Single comprehensive permit from the local review board for projects with ≥25% LMI units; 10% affordability goal per municipality; appeals to State Housing Appeals Board.",
-     "impact": "Main entitlement path for subsidized housing; its timeline sets carry cost.", "confidence": "high"},
-    {"id": "lihtc_tax_assessment", "name": "Affordable housing property tax assessment (R.I. Gen. Laws §44-5-13.11)",
-     "affects": "nonprofit_revenue", "mechanism": "Qualifying restricted rental property is assessed at 8% of prior-year gross scheduled rental income instead of market value.",
-     "impact": "Lowers operating expense and raises NOI and debt capacity for nonprofit owners.", "confidence": "high"},
-    {"id": "lihtc_federal", "name": "Federal LIHTC (IRC §42) and 2025 federal tax law changes",
-     "affects": "both", "mechanism": "Credit ceiling per capita; 2025 law permanently raised 9% allocations ~12% and lowered the 4% bond-financing test from 50% to 25% for bonds issued after 2025.",
-     "impact": "More 4% deals can close with less volume cap; the gap per deal still needs state soft funds.", "confidence": "verify"},
-    {"id": "source_of_income", "name": "Source-of-income anti-discrimination (2021 amendment to RI Fair Housing Practices Act)",
-     "affects": "nonprofit_revenue", "mechanism": "Landlords may not refuse tenants because they pay with vouchers or other lawful income.",
-     "impact": "Wider voucher use stabilizes rent collection for ELI units.", "confidence": "verify"},
-    {"id": "adaptive_reuse", "name": "Adaptive reuse of commercial buildings (2023 housing package)",
-     "affects": "production", "mechanism": "By-right residential conversion of qualifying commercial structures with density and parking relief.",
-     "impact": "Shortens entitlement; check whether surplus schools and other institutional buildings qualify.", "confidence": "verify"},
-    {"id": "adu_by_right", "name": "Accessory dwelling units by right (2024 housing package)",
-     "affects": "production", "mechanism": "ADUs permitted by right on qualifying lots, subject to local standards.",
-     "impact": "Small-scale supply with no subsidy needed.", "confidence": "verify"},
-    {"id": "home_cross_cutters", "name": "Federal cross-cutting requirements on HOME/HTF (Davis-Bacon, NEPA, Section 3)",
-     "affects": "both", "mechanism": "Prevailing wages at 12+ HOME-assisted units; environmental review before choice-limiting actions.",
-     "impact": "Raises hard cost and adds months; it is a common reason a layer adds ~4 months.", "confidence": "high"},
-    {"id": "extended_use", "name": "LIHTC extended use and qualified contract option",
-     "affects": "both", "mechanism": "15-year compliance plus extended use (≥30 years total); the qualified contract option can let an owner exit after year 15.",
-     "impact": "Expiring restrictions reduce affordable supply unless recapitalized.", "confidence": "high"},
-    {"id": "funding_cadence", "name": "Annual Consolidated Funding RFP cadence (RIHousing practice, not statute)",
-     "affects": "production", "mechanism": "Most state soft funds awarded once a year alongside 9% LIHTC.",
-     "impact": "Projects that are ready mid-cycle wait ~6 months on average; projects that are declined wait 12+.", "confidence": "high"}
+    {
+      "id": "comprehensive_permit",
+      "name": "Low and Moderate Income Housing Act (R.I. Gen. Laws ch. 45-53)",
+      "affects": "production",
+      "mechanism": "Single comprehensive permit from the local review board for projects with ≥25% LMI units; 10% affordability goal per municipality; appeals to State Housing Appeals Board.",
+      "impact": "Main entitlement path for subsidized housing; its timeline sets carry cost.",
+      "confidence": "high"
+    },
+    {
+      "id": "lihtc_tax_assessment",
+      "name": "Affordable housing property tax assessment (R.I. Gen. Laws §44-5-13.11)",
+      "affects": "nonprofit_revenue",
+      "mechanism": "Qualifying restricted rental property is assessed at 8% of prior-year gross scheduled rental income instead of market value.",
+      "impact": "Lowers operating expense and raises NOI and debt capacity for nonprofit owners.",
+      "confidence": "high"
+    },
+    {
+      "id": "lihtc_federal",
+      "name": "Federal LIHTC (IRC §42) and 2025 federal tax law changes",
+      "affects": "both",
+      "mechanism": "Credit ceiling per capita; 2025 law permanently raised 9% allocations ~12% and lowered the 4% bond-financing test from 50% to 25% for bonds issued after 2025.",
+      "impact": "More 4% deals can close with less volume cap; the gap per deal still needs state soft funds.",
+      "confidence": "verify"
+    },
+    {
+      "id": "source_of_income",
+      "name": "Source-of-income anti-discrimination (2021 amendment to RI Fair Housing Practices Act)",
+      "affects": "nonprofit_revenue",
+      "mechanism": "Landlords may not refuse tenants because they pay with vouchers or other lawful income.",
+      "impact": "Wider voucher use stabilizes rent collection for ELI units.",
+      "confidence": "verify"
+    },
+    {
+      "id": "adaptive_reuse",
+      "name": "Adaptive reuse of commercial buildings (2023 housing package)",
+      "affects": "production",
+      "mechanism": "By-right residential conversion of qualifying commercial structures with density and parking relief.",
+      "impact": "Shortens entitlement; check whether surplus schools and other institutional buildings qualify.",
+      "confidence": "verify"
+    },
+    {
+      "id": "adu_by_right",
+      "name": "Accessory dwelling units by right (2024 housing package)",
+      "affects": "production",
+      "mechanism": "ADUs permitted by right on qualifying lots, subject to local standards.",
+      "impact": "Small-scale supply with no subsidy needed.",
+      "confidence": "verify"
+    },
+    {
+      "id": "home_cross_cutters",
+      "name": "Federal cross-cutting requirements on HOME/HTF (Davis-Bacon, NEPA, Section 3)",
+      "affects": "both",
+      "mechanism": "Prevailing wages at 12+ HOME-assisted units; environmental review before choice-limiting actions.",
+      "impact": "Raises hard cost and adds months; it is a common reason a layer adds ~4 months.",
+      "confidence": "high"
+    },
+    {
+      "id": "extended_use",
+      "name": "LIHTC extended use and qualified contract option",
+      "affects": "both",
+      "mechanism": "15-year compliance plus extended use (≥30 years total); the qualified contract option can let an owner exit after year 15.",
+      "impact": "Expiring restrictions reduce affordable supply unless recapitalized.",
+      "confidence": "high"
+    },
+    {
+      "id": "funding_cadence",
+      "name": "Annual Consolidated Funding RFP cadence (RIHousing practice, not statute)",
+      "affects": "production",
+      "mechanism": "Most state soft funds awarded once a year alongside 9% LIHTC.",
+      "impact": "Projects that are ready mid-cycle wait ~6 months on average; projects that are declined wait 12+.",
+      "confidence": "high"
+    }
   ],
-
   "tweaks": [
-    {"factor": "funding_cadence", "tweak": "Move HPF and bond funds to quarterly tranches with a readiness gate", "mechanism": "RIHousing QAP/RFP", "calc": "cadence", "params": {"months_saved": 4.5}},
-    {"factor": "funding_cadence", "tweak": "Common application and single underwriting across HPF, bond, HOME, HTF, state LIHTC", "mechanism": "RIHousing + municipal participating jurisdictions MOU", "calc": "layer_removed", "params": {"layers_removed": 1}, "overlaps_with": "cadence"},
-    {"factor": "comprehensive_permit", "tweak": "Cut local approval delay 25% via deadlines and a Rejection-to-Approval Lag dashboard", "mechanism": "State legislation + municipal", "calc": "permitting", "params": {}},
-    {"factor": "comprehensive_permit", "tweak": "Remove continuance churn on approvals with no material plan change", "mechanism": "State legislation (reporting) + municipal", "calc": "churn", "params": {"churn_months_removed": 1, "share_of_projects_with_churn": 0.33}},
-    {"factor": "adaptive_reuse", "tweak": "Eliminate parking minimums near transit; by-right +30% density; unified review", "mechanism": "Municipal zoning + state enabling law", "calc": "zoning_stretch", "params": {"tdc_reduction_per_unit": 66500, "pool_usd": 120000000}},
-    {"factor": "adaptive_reuse", "tweak": "Ground-lease surplus schools at nominal rent with a comprehensive permit pre-approved", "mechanism": "Municipal", "calc": "free_land", "params": {"units_per_site": 25, "land_cost_per_unit": 60000}},
-    {"factor": "lihtc_tax_assessment", "tweak": "Extend 8%-of-rent assessment to non-LIHTC deed-restricted units (e.g., HPF-only, 80–100% AMI)", "mechanism": "State legislation", "calc": "tax_assessment", "params": {"tax_savings_per_unit_per_year": 1500, "dscr": 1.2, "debt_constant": 0.0725}},
-    {"factor": "source_of_income", "tweak": "Fund a state ELI operating subsidy paired with HTF/HPF capital awards", "mechanism": "State budget + PHA project-based vouchers", "calc": "operating_subsidy", "params": {"subsidy_per_unit_per_year": 7500, "dscr": 1.2, "debt_constant": 0.0725}},
-    {"factor": "lihtc_federal", "tweak": "Use the 25% bond test to push more 4% + state-LIHTC deals through each round", "mechanism": "RIHousing bond volume policy", "calc": "qualitative", "params": {"note": "Same volume cap supports about 2× the eligible basis versus the 50% test"}},
-    {"factor": "home_cross_cutters", "tweak": "Front-load NEPA review at site control; cap HOME assistance at 11 units per project where feasible (Davis-Bacon applies at 12+ HOME-assisted units)", "mechanism": "RIHousing / participating jurisdictions administration", "calc": "layer_removed", "params": {"layers_removed": 0.5}},
-    {"factor": "extended_use", "tweak": "Preservation set-aside, statutory opt-out notice, nonprofit right of first refusal, ban the qualified contract option", "mechanism": "QAP + state legislation", "calc": "preservation", "params": {"preservation_cost_ratio": 0.5}}
+    {
+      "factor": "funding_cadence",
+      "tweak": "Move HPF and bond funds to quarterly tranches with a readiness gate",
+      "mechanism": "RIHousing QAP/RFP",
+      "calc": "cadence",
+      "params": {
+        "months_saved": 4.5
+      },
+      "short": "Quarterly funding rounds"
+    },
+    {
+      "factor": "funding_cadence",
+      "tweak": "Common application and single underwriting across HPF, bond, HOME, HTF, state LIHTC",
+      "mechanism": "RIHousing + municipal participating jurisdictions MOU",
+      "calc": "layer_removed",
+      "params": {
+        "layers_removed": 1
+      },
+      "overlaps_with": "cadence",
+      "short": "One shared application"
+    },
+    {
+      "factor": "comprehensive_permit",
+      "tweak": "Cut local approval delay 25% via deadlines and a Rejection-to-Approval Lag dashboard",
+      "mechanism": "State legislation + municipal",
+      "calc": "permitting",
+      "params": {},
+      "short": "25% faster local approvals"
+    },
+    {
+      "factor": "comprehensive_permit",
+      "tweak": "Remove continuance churn on approvals with no material plan change",
+      "mechanism": "State legislation (reporting) + municipal",
+      "calc": "churn",
+      "params": {
+        "churn_months_removed": 1,
+        "share_of_projects_with_churn": 0.33
+      },
+      "short": "Less approval churn"
+    },
+    {
+      "factor": "adaptive_reuse",
+      "tweak": "Eliminate parking minimums near transit; by-right +30% density; unified review",
+      "mechanism": "Municipal zoning + state enabling law",
+      "calc": "zoning_stretch",
+      "params": {
+        "tdc_reduction_per_unit": 66500,
+        "pool_usd": 120000000
+      },
+      "short": "Parking + density + single review"
+    },
+    {
+      "factor": "adaptive_reuse",
+      "tweak": "Ground-lease surplus schools at nominal rent with a comprehensive permit pre-approved",
+      "mechanism": "Municipal",
+      "calc": "free_land",
+      "params": {
+        "units_per_site": 25,
+        "land_cost_per_unit": 60000
+      },
+      "short": "Surplus schools on free land"
+    },
+    {
+      "factor": "lihtc_tax_assessment",
+      "tweak": "Extend 8%-of-rent assessment to non-LIHTC deed-restricted units (e.g., HPF-only, 80–100% AMI)",
+      "mechanism": "State legislation",
+      "calc": "tax_assessment",
+      "params": {
+        "tax_savings_per_unit_per_year": 1500,
+        "dscr": 1.2,
+        "debt_constant": 0.0725
+      },
+      "short": "Wider 8%-of-rent tax rule"
+    },
+    {
+      "factor": "source_of_income",
+      "tweak": "Fund a state ELI operating subsidy paired with HTF/HPF capital awards",
+      "mechanism": "State budget + PHA project-based vouchers",
+      "calc": "operating_subsidy",
+      "params": {
+        "subsidy_per_unit_per_year": 7500,
+        "dscr": 1.2,
+        "debt_constant": 0.0725
+      },
+      "short": "ELI operating subsidy"
+    },
+    {
+      "factor": "lihtc_federal",
+      "tweak": "Use the 25% bond test to push more 4% + state-LIHTC deals through each round",
+      "mechanism": "RIHousing bond volume policy",
+      "calc": "qualitative",
+      "params": {
+        "note": "Same volume cap supports about 2× the eligible basis versus the 50% test"
+      },
+      "short": "Use the 25% bond test"
+    },
+    {
+      "factor": "home_cross_cutters",
+      "tweak": "Front-load NEPA review at site control; cap HOME assistance at 11 units per project where feasible (Davis-Bacon applies at 12+ HOME-assisted units)",
+      "mechanism": "RIHousing / participating jurisdictions administration",
+      "calc": "layer_removed",
+      "params": {
+        "layers_removed": 0.5
+      },
+      "short": "Faster federal reviews"
+    },
+    {
+      "factor": "extended_use",
+      "tweak": "Preservation set-aside, statutory opt-out notice, nonprofit right of first refusal, ban the qualified contract option",
+      "mechanism": "QAP + state legislation",
+      "calc": "preservation",
+      "params": {
+        "preservation_cost_ratio": 0.5
+      },
+      "short": "Preserve expiring units"
+    }
   ]
 }

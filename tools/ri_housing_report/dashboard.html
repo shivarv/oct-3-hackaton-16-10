@@ -1,0 +1,658 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Rhode Island Housing Dashboard</title>
+<style>
+/* Layout: sticky section nav over a single 76rem column; KPI strip, then one card per section */
+:root{
+  color-scheme:light;
+  --page:#f9f9f7; --surface:#fcfcfb; --raised:#ffffff;
+  --ink:#0b0b0b; --ink-2:#52514e; --muted:#898781;
+  --grid:#e1e0d9; --axis:#c3c2b7; --border:rgba(11,11,11,.10);
+  --s1:#2a78d6; --s2:#eb6834; --s3:#1baf7a; --s4:#eda100;
+  --s1-wash:rgba(42,120,214,.10); --track:#e9eef5;
+  --good:#0ca30c; --warn:#fab219; --crit:#d03b3b; --good-ink:#006300;
+  --chip:#f0efec;
+  --font:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  color-scheme:dark;
+  --page:#0d0d0d; --surface:#1a1a19; --raised:#222220;
+  --ink:#ffffff; --ink-2:#c3c2b7; --muted:#898781;
+  --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,.10);
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500;
+  --s1-wash:rgba(57,135,229,.14); --track:#25303d; --good-ink:#0ca30c; --chip:#2a2a28}}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --page:#0d0d0d; --surface:#1a1a19; --raised:#222220;
+  --ink:#ffffff; --ink-2:#c3c2b7; --muted:#898781;
+  --grid:#2c2c2a; --axis:#383835; --border:rgba(255,255,255,.10);
+  --s1:#3987e5; --s2:#d95926; --s3:#199e70; --s4:#c98500;
+  --s1-wash:rgba(57,135,229,.14); --track:#25303d; --good-ink:#0ca30c; --chip:#2a2a28}
+
+*{box-sizing:border-box}
+body{margin:0;background:var(--page);color:var(--ink);font:15px/1.5 var(--font)}
+.wrap{max-width:76rem;margin:0 auto;padding-inline:16px;padding-block:0 4rem}
+header.top{padding-block:2rem 1rem}
+.eyebrow{font-size:.75rem;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-2)}
+h1{font-size:clamp(1.6rem,3.5vw,2.2rem);margin:.3rem 0 .4rem;text-wrap:balance;font-weight:650}
+.sub{color:var(--ink-2);margin:0;max-width:70ch}
+nav.sections{position:sticky;top:env(safe-area-inset-top,0px);z-index:5;background:var(--page);
+  border-bottom:1px solid var(--grid);display:flex;gap:.25rem;overflow-x:auto;padding-block:.5rem;margin-bottom:1.25rem}
+nav.sections a{color:var(--ink-2);text-decoration:none;padding:.35rem .7rem;border-radius:6px;white-space:nowrap;font-size:.88rem}
+nav.sections a:hover{background:var(--chip);color:var(--ink)}
+a:focus-visible,button:focus-visible,[tabindex]:focus-visible{outline:2px solid var(--s1);outline-offset:2px}
+
+.status{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1rem}
+.pill{display:inline-flex;align-items:center;gap:.4rem;font-size:.8rem;padding:.25rem .6rem;border-radius:999px;
+  background:var(--raised);border:1px solid var(--border);color:var(--ink-2)}
+.dot{width:8px;height:8px;border-radius:50%;flex:none}
+.dot.ok{background:var(--good)} .dot.fail{background:var(--crit)} .dot.off{background:var(--axis)}
+
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(12.5rem,1fr));gap:.75rem;margin-bottom:1.5rem}
+.kpi{background:var(--raised);border:1px solid var(--border);border-radius:10px;padding:.9rem 1rem;display:flex;flex-direction:column;gap:.15rem;min-width:0}
+.kpi .label{font-size:.8rem;color:var(--ink-2)}
+.kpi .value{font-size:1.65rem;font-weight:650;line-height:1.2}
+.kpi .delta{font-size:.8rem;color:var(--ink-2)}
+.kpi .delta.up{color:var(--good-ink)}
+.kpi svg{margin-top:.35rem}
+
+section.card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:1.25rem;margin-bottom:1.25rem;scroll-margin-top:4rem}
+section.card > h2{font-size:1.25rem;margin:0 0 .25rem;font-weight:650;text-wrap:balance}
+.card-sub{color:var(--ink-2);margin:0 0 1rem;font-size:.9rem;max-width:80ch}
+h3{font-size:1rem;margin:0 0 .15rem;font-weight:600}
+.h3-sub{color:var(--ink-2);font-size:.82rem;margin:0 0 .6rem}
+
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,26rem),1fr));gap:1.25rem}
+.panel{min-width:0}
+.legend{display:flex;flex-wrap:wrap;gap:.9rem;font-size:.82rem;color:var(--ink-2);margin-bottom:.4rem}
+.legend span{display:inline-flex;align-items:center;gap:.35rem}
+.sw{width:10px;height:10px;border-radius:2px;display:inline-block}
+.chart{width:100%;position:relative}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.chart text{font-family:var(--font);font-size:11px;fill:var(--muted)}
+.chart text.val{fill:var(--ink);font-weight:600}
+.chart .grid{stroke:var(--grid);stroke-width:1}
+.chart .base{stroke:var(--axis);stroke-width:1}
+.chart .hit{fill:transparent;cursor:crosshair}
+
+.tbl{overflow-x:auto;border:1px solid var(--border);border-radius:8px;background:var(--raised)}
+table{border-collapse:collapse;width:100%;font-size:.85rem}
+th,td{text-align:left;vertical-align:top;padding:.55rem .7rem;border-bottom:1px solid var(--grid)}
+tr:last-child td{border-bottom:0}
+th{font-size:.72rem;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-2);font-weight:600;background:var(--surface);white-space:nowrap}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+#tweak-table{min-width:62rem}
+#tweak-table td:first-child{min-width:15rem}
+#tweak-table td:nth-child(2){min-width:11rem}
+#tweak-table td:last-child{min-width:16rem}
+details{margin-top:.9rem}
+summary{cursor:pointer;color:var(--ink-2);font-size:.85rem}
+details[open] summary{margin-bottom:.6rem}
+
+.notes{display:grid;gap:.4rem;margin:.9rem 0 0;padding:0;list-style:none;font-size:.88rem;color:var(--ink-2)}
+.notes b{color:var(--ink)}
+.callout{border-radius:8px;padding:.7rem .9rem;font-size:.88rem;margin-top:.9rem;background:var(--chip);color:var(--ink-2);display:flex;gap:.6rem}
+.callout .ico{font-weight:700;flex:none}
+.callout.fail .ico{color:var(--crit)}
+
+.filters{display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:1rem}
+.filters button{font:inherit;font-size:.84rem;border:1px solid var(--border);background:var(--raised);color:var(--ink-2);
+  border-radius:999px;padding:.3rem .8rem;cursor:pointer}
+.filters button[aria-pressed="true"]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.counts{display:grid;grid-template-columns:repeat(auto-fit,minmax(10rem,1fr));gap:.75rem;margin-bottom:1rem}
+.count{border:1px solid var(--border);border-radius:8px;padding:.6rem .8rem;background:var(--raised)}
+.count b{display:block;font-size:1.35rem}
+.count span{font-size:.8rem;color:var(--ink-2)}
+.laws{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,22rem),1fr));gap:.75rem}
+.law{border:1px solid var(--border);border-radius:10px;background:var(--raised);padding:.9rem 1rem;display:flex;flex-direction:column;gap:.5rem;min-width:0}
+.law h4{margin:0;font-size:.95rem;font-weight:600;line-height:1.35}
+.law p{margin:0;font-size:.85rem;color:var(--ink-2)}
+.law p b{color:var(--ink);font-weight:600}
+.chips{display:flex;flex-wrap:wrap;gap:.35rem}
+.chip{font-size:.72rem;padding:.12rem .5rem;border-radius:4px;background:var(--chip);color:var(--ink-2);white-space:nowrap;display:inline-flex;align-items:center;gap:.3rem}
+.links{border-top:1px solid var(--grid);padding-top:.5rem;font-size:.82rem;display:grid;gap:.25rem}
+.links div{display:flex;justify-content:space-between;gap:.75rem}
+.links .v{font-variant-numeric:tabular-nums;color:var(--ink);font-weight:600;white-space:nowrap}
+
+.bars{display:grid;gap:.45rem}
+.bar-row{display:grid;grid-template-columns:minmax(8rem,13rem) 1fr 4.2rem;align-items:center;gap:.6rem;font-size:.84rem;border-radius:6px;padding:.1rem 0}
+.bar-row .lbl{color:var(--ink);min-width:0}
+.bar-row .lbl small{display:block;color:var(--muted);font-size:.72rem}
+.track{position:relative;height:20px}
+.track .fill{position:absolute;left:0;top:2px;height:16px;background:var(--s1);border-radius:0 4px 4px 0;min-width:2px}
+.track .fill.overlap{opacity:.45}
+.bar-row .v{text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+.axis-row{display:grid;grid-template-columns:minmax(8rem,13rem) 1fr 4.2rem;gap:.6rem;font-size:.7rem;color:var(--muted)}
+.axis-row .ticks{position:relative;height:1rem;border-bottom:1px solid var(--axis)}
+.axis-row .ticks span{position:absolute;transform:translateX(-50%)}
+.axis-row .ticks span:first-child{transform:none}
+.bars-grid{position:relative}
+@media (max-width:560px){
+  .bar-row,.axis-row{grid-template-columns:1fr 3.6rem}
+  .bar-row .lbl{grid-column:1 / -1}
+  .axis-row > :first-child{display:none}
+}
+
+#tip{position:fixed;pointer-events:none;z-index:20;background:var(--raised);color:var(--ink);border:1px solid var(--border);
+  border-radius:8px;padding:.55rem .7rem;font-size:.8rem;box-shadow:0 6px 20px rgba(0,0,0,.14);max-width:20rem;opacity:0;transition:opacity .08s}
+#tip.on{opacity:1}
+#tip .t{font-weight:600;margin-bottom:.25rem}
+#tip .r{display:flex;justify-content:space-between;gap:1rem;font-variant-numeric:tabular-nums}
+#tip .r span:first-child{display:inline-flex;align-items:center;gap:.35rem;color:var(--ink-2)}
+#tip .d{color:var(--ink-2);margin-top:.3rem}
+.meter{display:grid;gap:.35rem;margin-bottom:1.1rem}
+.meter .top{display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;font-size:.86rem}
+.meter .top b{font-size:.95rem}
+.meter .track2{position:relative;height:28px;background:var(--track);border-radius:6px;overflow:hidden}
+.meter .fill2{position:absolute;inset:0 auto 0 0;background:var(--s1);border-radius:6px 0 0 6px}
+.meter .cap{display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;font-size:.8rem;color:var(--ink-2)}
+.meter .cap b{color:var(--ink)}
+.gapbox{border:1px solid var(--border);border-radius:10px;background:var(--raised);padding:1rem;margin-bottom:1.25rem}
+.gapbox h3{margin-bottom:.8rem}
+.big{font-size:2rem;font-weight:650;line-height:1.1}
+.kpi .delta.bad{color:var(--crit)}
+footer{color:var(--ink-2);font-size:.82rem;margin-top:2rem;max-width:90ch}
+@media (prefers-reduced-motion:reduce){#tip{transition:none}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="top">
+    <div class="eyebrow">GDG Providence AI Lab for Housing</div>
+    <h1>Rhode Island Housing Dashboard</h1>
+    <p class="sub">State funding, homes permitted, the laws that shape nonprofit finances, and what each policy change could add.</p>
+    <div class="status" id="status"></div>
+  </header>
+
+  <nav class="sections" aria-label="Sections">
+    <a href="#funding">1 · Funding</a>
+    <a href="#production">2 · Production</a>
+    <a href="#laws">3 · Laws</a>
+    <a href="#tweaks">4 · Tweaks &amp; impact</a>
+    <a href="#homeless">5 · Homelessness gap</a>
+  </nav>
+
+  <div class="kpis" id="kpis"></div>
+
+  <section class="card" id="funding">
+    <h2>1. State budget and funding sources</h2>
+    <p class="card-sub" id="funding-sub"></p>
+    <div class="tbl"><table id="funding-table"></table></div>
+    <div id="ai"></div>
+  </section>
+
+  <section class="card" id="production">
+    <h2>2. Housing production in Rhode Island (Census Building Permits Survey)</h2>
+    <p class="card-sub">Units authorized by building permits each year, by building size. Permits include market-rate and affordable homes.</p>
+    <div class="grid2">
+      <div class="panel">
+        <h3>Units permitted per year</h3>
+        <p class="h3-sub">Stacked by building size</p>
+        <div class="legend" id="prod-legend"></div>
+        <div class="chart" id="chart-stack"></div>
+      </div>
+      <div class="panel">
+        <h3>Share of units in 5+ unit buildings</h3>
+        <p class="h3-sub">Multifamily is where most subsidized rental housing is built</p>
+        <div class="chart" id="chart-share"></div>
+      </div>
+    </div>
+    <ul class="notes" id="prod-notes"></ul>
+    <details><summary>Show data table</summary><div class="tbl"><table id="prod-table"></table></div></details>
+  </section>
+
+  <section class="card" id="laws">
+    <h2>3. Laws and features that affect nonprofit revenue and units built</h2>
+    <p class="card-sub">Each card shows what the law does, what it changes, and the tweaks in section 4 that act on it.</p>
+    <div class="counts" id="law-counts"></div>
+    <div class="filters" id="law-filters" role="group" aria-label="Filter laws"></div>
+    <div class="laws" id="law-cards"></div>
+  </section>
+
+  <section class="card" id="tweaks">
+    <h2>4. Tweaks to build more housing or improve project finances</h2>
+    <p class="card-sub">Two measures of impact. <b>Added homes</b> compares extra units per year with all units permitted statewide in the latest year. <b>Subsidy stretch</b> is how many more units the same public dollars would fund.</p>
+    <div class="grid2">
+      <div class="panel">
+        <h3>Added homes per year, % of statewide permits</h3>
+        <p class="h3-sub" id="units-sub"></p>
+        <div id="bars-units"></div>
+      </div>
+      <div class="panel">
+        <h3>Subsidy stretch: more units from the same dollars</h3>
+        <p class="h3-sub">Lighter bar overlaps with quarterly rounds; do not add the two</p>
+        <div id="bars-stretch"></div>
+      </div>
+    </div>
+    <h3 style="margin-top:1.5rem">All tweaks</h3>
+    <p class="h3-sub">Hover a bar above for the calculation behind it</p>
+    <div class="tbl"><table id="tweak-table"></table></div>
+  </section>
+
+  <section class="card" id="homeless">
+    <h2>5. Homelessness vs affordable homes in Rhode Island</h2>
+    <p class="card-sub">HUD's annual point-in-time count of people experiencing homelessness, compared with the subsidized housing stock and how fast new affordable homes are added.</p>
+    <div class="kpis" id="h-kpis"></div>
+    <div class="gapbox">
+      <h3>The gap</h3>
+      <div id="gap-meters"></div>
+      <ul class="notes" id="gap-notes"></ul>
+    </div>
+    <div class="grid2">
+      <div class="panel">
+        <h3>People counted homeless each January</h3>
+        <p class="h3-sub">Sheltered (emergency shelter + transitional) vs unsheltered</p>
+        <div class="legend" id="h-legend"></div>
+        <div class="chart" id="chart-homeless"></div>
+      </div>
+      <div class="panel">
+        <h3>Homelessness vs homes permitted, indexed</h3>
+        <p class="h3-sub" id="idx-sub"></p>
+        <div class="legend" id="idx-legend"></div>
+        <div class="chart" id="chart-index"></div>
+      </div>
+    </div>
+    <h3 style="margin-top:1.5rem">Subsidized housing stock in Rhode Island (HUD)</h3>
+    <p class="h3-sub">Programs overlap (many LIHTC properties also hold HUD Section 8 contracts), so the bars are not additive</p>
+    <div id="bars-stock"></div>
+    <details><summary>Show homelessness data table</summary><div class="tbl"><table id="pit-table"></table></div></details>
+  </section>
+
+  <footer id="foot"></footer>
+</div>
+<div id="tip" role="tooltip"></div>
+
+<script>
+const D = /*__DATA__*/null;
+
+/* ---------- helpers ---------- */
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? "").replace(/[&<>"]/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const num = (n) => n == null ? "—" : Math.round(n).toLocaleString("en-US");
+const usd = (n) => n == null ? "—" : n >= 1e9 ? `$${(n/1e9).toFixed(2)}B` : n >= 1e6 ? `$${(n/1e6).toFixed(1)}M` : `$${Math.round(n).toLocaleString("en-US")}`;
+const pct = (x, d) => x == null ? "—" : `${(x*100).toFixed(d ?? (Math.abs(x) >= .1 ? 0 : 1))}%`;
+const svgNS = "http://www.w3.org/2000/svg";
+const el = (tag, attrs = {}, parent) => { const e = document.createElementNS(svgNS, tag);
+  for (const k in attrs) e.setAttribute(k, attrs[k]); if (parent) parent.appendChild(e); return e; };
+function niceMax(v, ticks = 4) {
+  if (v <= 0) return { max: 1, step: .25 };
+  const raw = v / ticks, mag = 10 ** Math.floor(Math.log10(raw));
+  const step = [1, 2, 2.5, 5, 10].map((m) => m * mag).find((s) => s >= raw);
+  return { max: Math.ceil(v / step) * step, step };
+}
+const LAW_NAME = Object.fromEntries(D.laws.map((l) => [l.id, l.name]));
+
+/* ---------- tooltip ---------- */
+const tip = $("#tip");
+function showTip(ev, html) {
+  tip.innerHTML = html; tip.classList.add("on");
+  const r = tip.getBoundingClientRect();
+  let x = (ev.clientX ?? 0) + 14, y = (ev.clientY ?? 0) + 14;
+  if (ev.clientX == null && ev.target.getBoundingClientRect) { const b = ev.target.getBoundingClientRect(); x = b.left; y = b.bottom + 6; }
+  if (x + r.width > innerWidth - 8) x = innerWidth - r.width - 8;
+  if (y + r.height > innerHeight - 8) y = (ev.clientY ?? y) - r.height - 14;
+  tip.style.left = `${Math.max(8, x)}px`; tip.style.top = `${Math.max(8, y)}px`;
+}
+const hideTip = () => tip.classList.remove("on");
+function bindTip(node, html) {
+  node.addEventListener("mousemove", (e) => showTip(e, html()));
+  node.addEventListener("mouseleave", hideTip);
+  node.addEventListener("focus", (e) => showTip(e, html()));
+  node.addEventListener("blur", hideTip);
+}
+
+/* ---------- header ---------- */
+$("#status").innerHTML = D.status.map((s) =>
+  `<span class="pill" title="${esc(s.note)}"><span class="dot ${s.state}"></span>${esc(s.source)}: ${
+    {ok: "working", off: "not enabled", fail: "failed"}[s.state]}</span>`).join("");
+
+const P = D.permits, S = D.permit_stats, G = D.derived.gap_per_unit;
+function sparkline(values) {
+  const w = 160, h = 34, max = Math.max(...values), min = Math.min(...values);
+  const x = (i) => 2 + i * (w - 6) / (values.length - 1), y = (v) => h - 4 - (v - min) / ((max - min) || 1) * (h - 10);
+  const d = values.map((v, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(v).toFixed(1)}`).join("");
+  const lx = x(values.length - 1), ly = y(values.at(-1));
+  return `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" aria-hidden="true">
+    <path d="${d}" fill="none" stroke="var(--muted)" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+    <circle cx="${lx}" cy="${ly}" r="4" fill="var(--s1)" stroke="var(--raised)" stroke-width="2"/></svg>`;
+}
+const kpis = [];
+if (P.length) {
+  const ch = S.change_vs_prev;
+  kpis.push(`<div class="kpi"><span class="label">Units permitted in ${S.latest_year}</span><span class="value">${num(S.latest_total)}</span>
+    <span class="delta ${ch > 0 ? "up" : ""}">${ch == null ? "" : `${ch > 0 ? "▲" : "▼"} ${pct(Math.abs(ch))} vs ${S.latest_year - 1}`}</span>
+    ${P.length > 2 ? sparkline(P.map((r) => r.total_units)) : ""}</div>`);
+  kpis.push(`<div class="kpi"><span class="label">Units per 1,000 residents</span><span class="value">${S.per_1000_residents.toFixed(1)}</span>
+    <span class="delta">5-year average ${num(S.avg_last_5)} units/yr</span></div>`);
+  kpis.push(`<div class="kpi"><span class="label">Share in 5+ unit buildings</span><span class="value">${pct(S.latest_multifamily_share)}</span>
+    <span class="delta">${S.latest_year} permits</span></div>`);
+}
+kpis.push(`<div class="kpi"><span class="label">Public subsidy per affordable unit</span><span class="value">${usd(G)}</span>
+  <span class="delta">${pct(D.benchmarks.public_subsidy_share)} of ${usd(D.benchmarks.tdc_per_subsidized_unit)} total cost</span></div>`);
+if (D.derived.bond_2024) kpis.push(`<div class="kpi"><span class="label">Units the 2024 bond can fund</span>
+  <span class="value">≈${num(D.derived.bond_2024 / G)}</span><span class="delta">${usd(D.derived.bond_2024)} at ${usd(G)}/unit</span></div>`);
+$("#kpis").innerHTML = kpis.join("");
+
+/* ---------- 1. funding ---------- */
+const B = D.benchmarks;
+$("#funding-sub").innerHTML = `Every added funding source costs about <b>${B.months_added_per_layer} months</b> and <b>${usd(B.carry_cost_per_layer_per_unit)} per unit</b>, and more than ${pct(B.multi_layer_share)} of projects use several. That works out to about ${usd(D.derived.carry_per_unit_month)} per unit per month, across roughly ${num(D.derived.pipeline_units)} units in predevelopment.`;
+const confChip = (c) => c === "high" ? `<span class="chip"><span class="dot ok"></span>High confidence</span>`
+  : c === "verify" ? `<span class="chip"><span class="dot" style="background:var(--warn)"></span>Verify</span>`
+  : `<span class="chip"><span class="dot off"></span>Fill in</span>`;
+$("#funding-table").innerHTML = `<thead><tr><th>Source</th><th>Level</th><th class="n">Amount</th><th class="n">Year</th><th>Use</th><th>Confidence</th></tr></thead><tbody>${
+  D.funding.map((f) => `<tr><td><b>${esc(f.name)}</b></td><td>${esc(f.level)}</td><td class="n">${usd(f.amount_usd)}</td>
+  <td class="n">${f.year ?? "—"}</td><td>${esc(f.use)}</td><td>${confChip(f.confidence)}</td></tr>`).join("")}</tbody>`;
+const ai = D.ai_budget;
+if (ai && ai.error) {
+  $("#ai").innerHTML = `<div class="callout fail"><span class="ico">✕</span><div><b>Budget lookup failed.</b> ${esc(ai.error)}</div></div>`;
+} else if (ai) {
+  $("#ai").innerHTML = `<h3 style="margin-top:1.2rem">${esc(ai.fiscal_year || "")} budget lines found by Gemini + Google Search</h3>
+  <p class="h3-sub">Unverified. Check each figure against the enacted budget at omb.ri.gov. Total state budget: ${usd(ai.total_state_budget_usd)}</p>
+  <div class="tbl"><table><thead><tr><th>Item</th><th class="n">Amount</th><th>Fund</th><th>Description</th><th>Source</th></tr></thead><tbody>${
+    (ai.housing_items || []).map((i) => `<tr><td>${esc(i.name)}</td><td class="n">${usd(i.amount_usd)}</td><td>${esc(i.fund_type)}</td>
+    <td>${esc(i.description)}</td><td>${i.source_url ? `<a href="${esc(i.source_url)}" target="_blank" rel="noopener">link</a>` : ""}</td></tr>`).join("")}</tbody></table></div>`;
+} else {
+  $("#ai").innerHTML = `<div class="callout"><span class="ico">i</span><div>Run with <code>--ai</code> to add the current enacted budget's housing lines from Gemini + Google Search.</div></div>`;
+}
+
+/* ---------- 2. production ---------- */
+const SERIES = [ // bottom of stack first; slot order fixed
+  { key: "units_5_plus", name: "5+ units", c: "var(--s1)" },
+  { key: "units_3_4", name: "3–4 units", c: "var(--s2)" },
+  { key: "units_2", name: "2 units", c: "var(--s3)" },
+  { key: "units_1", name: "1 unit", c: "var(--s4)" },
+];
+$("#prod-legend").innerHTML = SERIES.map((s) => `<span><i class="sw" style="background:${s.c}"></i>${s.name}</span>`).join("");
+
+function stackChart(host, rows, series, opts = {}) {
+  host.innerHTML = "";
+  if (!rows.length) { host.innerHTML = `<p class="h3-sub">${opts.empty || "No data."}</p>`; return; }
+  const tot = (r) => series.reduce((a, s) => a + (r[s.key] || 0), 0);
+  const W = Math.max(300, host.clientWidth), H = 280, m = { t: 22, r: 8, b: 26, l: 44 };
+  const iw = W - m.l - m.r, ih = H - m.t - m.b;
+  const { max, step } = niceMax(Math.max(...rows.map(tot)));
+  const y = (v) => m.t + ih - v / max * ih;
+  const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": opts.label || "Stacked column chart" }, host);
+  for (let v = 0; v <= max + 1e-9; v += step) {
+    el("line", { x1: m.l, x2: W - m.r, y1: y(v), y2: y(v), class: v ? "grid" : "base" }, svg);
+    el("text", { x: m.l - 6, y: y(v) + 4, "text-anchor": "end" }, svg).textContent = num(v);
+  }
+  const band = iw / rows.length, bw = Math.min(24, band * .62);
+  const labelEvery = Math.ceil(rows.length / Math.max(1, Math.floor(iw / 44)));
+  let peakIdx = 0; rows.forEach((r, i) => { if (tot(r) > tot(rows[peakIdx])) peakIdx = i; });
+  rows.forEach((r, i) => {
+    const cx = m.l + band * i + band / 2, x = cx - bw / 2;
+    let acc = 0;
+    const segs = series.filter((s) => r[s.key] > 0);
+    segs.forEach((s, j) => {
+      const y0 = y(acc), y1 = y(acc + r[s.key]); acc += r[s.key];
+      const bottom = y0 - (j > 0 ? 2 : 0), top = y1, h = Math.max(0, bottom - top);
+      if (h <= 0) return;
+      if (j === segs.length - 1) {
+        const rr = Math.min(4, h, bw / 2);
+        el("path", { d: `M${x},${bottom}V${top + rr}Q${x},${top} ${x + rr},${top}H${x + bw - rr}Q${x + bw},${top} ${x + bw},${top + rr}V${bottom}Z`, fill: s.c }, svg);
+      } else el("rect", { x, y: top, width: bw, height: h, fill: s.c }, svg);
+    });
+    if (i === rows.length - 1 || (i === peakIdx && rows.length - 1 - peakIdx > 1))
+      el("text", { x: cx, y: y(tot(r)) - 6, "text-anchor": "middle", class: "val" }, svg).textContent = num(tot(r));
+    if (i % labelEvery === 0 || i === rows.length - 1)
+      el("text", { x: cx, y: H - 8, "text-anchor": "middle" }, svg).textContent = r.year;
+    const hit = el("rect", { x: m.l + band * i, y: m.t, width: band, height: ih, class: "hit", tabindex: 0,
+      "aria-label": `${r.year}: ${num(tot(r))} ${opts.unit || ""}` }, svg);
+    bindTip(hit, () => `<div class="t">${r.year} · ${num(tot(r))} ${opts.unit || ""}</div>${
+      [...series].reverse().map((s) => `<div class="r"><span><i class="sw" style="background:${s.c}"></i>${s.name}</span><span>${num(r[s.key])}</span></div>`).join("")}`);
+  });
+}
+const drawStack = () => stackChart($("#chart-stack"), P, SERIES,
+  { unit: "units", label: "Stacked columns of units permitted per year by building size", empty: "No permit data (offline or fetch failed)." });
+
+function drawShare() {
+  const host = $("#chart-share"); host.innerHTML = "";
+  if (!P.length) return;
+  const vals = P.map((r) => r.total_units ? r.units_5_plus / r.total_units : 0);
+  const W = Math.max(300, host.clientWidth), H = 280, m = { t: 22, r: 44, b: 26, l: 44 };
+  const iw = W - m.l - m.r, ih = H - m.t - m.b;
+  const { max, step } = niceMax(Math.max(...vals));
+  const x = (i) => m.l + (P.length === 1 ? iw / 2 : i * iw / (P.length - 1)), y = (v) => m.t + ih - v / max * ih;
+  const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "Line chart of the share of permitted units in 5+ unit buildings" }, host);
+  for (let v = 0; v <= max + 1e-9; v += step) {
+    el("line", { x1: m.l, x2: W - m.r, y1: y(v), y2: y(v), class: v ? "grid" : "base" }, svg);
+    el("text", { x: m.l - 6, y: y(v) + 4, "text-anchor": "end" }, svg).textContent = pct(v, 0);
+  }
+  const labelEvery = Math.ceil(P.length / Math.max(1, Math.floor(iw / 44)));
+  P.forEach((r, i) => { if (i % labelEvery === 0 || i === P.length - 1)
+    el("text", { x: x(i), y: H - 8, "text-anchor": "middle" }, svg).textContent = r.year; });
+  const d = vals.map((v, i) => `${i ? "L" : "M"}${x(i)},${y(v)}`).join("");
+  el("path", { d: `${d}L${x(vals.length - 1)},${y(0)}L${x(0)},${y(0)}Z`, fill: "var(--s1-wash)" }, svg);
+  el("path", { d, fill: "none", stroke: "var(--s1)", "stroke-width": 2, "stroke-linejoin": "round", "stroke-linecap": "round" }, svg);
+  const li = vals.length - 1;
+  el("circle", { cx: x(li), cy: y(vals[li]), r: 4, fill: "var(--s1)", stroke: "var(--surface)", "stroke-width": 2 }, svg);
+  el("text", { x: x(li) + 8, y: y(vals[li]) + 4, class: "val" }, svg).textContent = pct(vals[li], 0);
+  const cross = el("line", { y1: m.t, y2: m.t + ih, stroke: "var(--axis)", "stroke-width": 1, visibility: "hidden" }, svg);
+  const cdot = el("circle", { r: 4, fill: "var(--s1)", stroke: "var(--surface)", "stroke-width": 2, visibility: "hidden" }, svg);
+  const hit = el("rect", { x: m.l, y: m.t, width: iw, height: ih, class: "hit" }, svg);
+  hit.addEventListener("mousemove", (e) => {
+    const b = svg.getBoundingClientRect(), px = (e.clientX - b.left) * W / b.width;
+    const i = Math.max(0, Math.min(P.length - 1, Math.round((px - m.l) / (iw / Math.max(1, P.length - 1)))));
+    cross.setAttribute("x1", x(i)); cross.setAttribute("x2", x(i)); cross.setAttribute("visibility", "visible");
+    cdot.setAttribute("cx", x(i)); cdot.setAttribute("cy", y(vals[i])); cdot.setAttribute("visibility", "visible");
+    showTip(e, `<div class="t">${P[i].year}</div><div class="r"><span>5+ unit share</span><span>${pct(vals[i])}</span></div>
+      <div class="r"><span>5+ units</span><span>${num(P[i].units_5_plus)}</span></div><div class="r"><span>All units</span><span>${num(P[i].total_units)}</span></div>`);
+  });
+  hit.addEventListener("mouseleave", () => { hideTip(); cross.setAttribute("visibility", "hidden"); cdot.setAttribute("visibility", "hidden"); });
+}
+
+if (P.length) {
+  $("#prod-notes").innerHTML = [
+    `<li><b>${S.latest_year}:</b> ${num(S.latest_total)} units permitted, ${S.per_1000_residents.toFixed(1)} per 1,000 residents.</li>`,
+    `<li><b>Peak in this window:</b> ${num(S.peak_total)} units in ${S.peak_year}. Five-year average: ${num(S.avg_last_5)} units a year.</li>`,
+    `<li><b>Approval reform:</b> 600–700 more units a year would lift output by about ${pct(S.permitting_reform_uplift_pct)} over ${S.latest_year}.</li>`,
+  ].join("");
+  $("#prod-table").innerHTML = `<thead><tr><th>Year</th>${[...SERIES].reverse().map((s) => `<th class="n">${s.name}</th>`).join("")}<th class="n">Total</th><th class="n">5+ share</th></tr></thead><tbody>${
+    P.map((r) => `<tr><td>${r.year}</td>${[...SERIES].reverse().map((s) => `<td class="n">${num(r[s.key])}</td>`).join("")}
+    <td class="n"><b>${num(r.total_units)}</b></td><td class="n">${pct(r.units_5_plus / r.total_units)}</td></tr>`).join("")}</tbody>`;
+}
+
+/* ---------- 3. laws ---------- */
+const AFFECTS = { production: "Units built", nonprofit_revenue: "Nonprofit revenue", both: "Units built + revenue" };
+const tweaksFor = (id) => D.tweaks.filter((t) => t.factor === id);
+const impactText = (r) => r.units_range ? `+${r.units_range[0]}–${r.units_range[1]} units/yr`
+  : r.units_pct != null ? `+${pct(r.units_pct)} homes` : r.stretch_pct != null ? `+${pct(r.stretch_pct)} stretch`
+  : r.units ? `${num(r.units)} units/site` : "qualitative";
+$("#law-counts").innerHTML = [
+  [D.laws.filter((l) => l.affects !== "nonprofit_revenue").length, "affect units built"],
+  [D.laws.filter((l) => l.affects !== "production").length, "affect nonprofit revenue"],
+  [D.tweaks.length, "priced tweaks linked to these laws"],
+  [D.laws.filter((l) => l.confidence !== "high").length, "need verification"],
+].map(([n, t]) => `<div class="count"><b>${n}</b><span>${t}</span></div>`).join("");
+let lawFilter = "all";
+function drawLaws() {
+  const list = D.laws.filter((l) => lawFilter === "all" || l.affects === lawFilter || (lawFilter !== "both" && l.affects === "both"));
+  $("#law-cards").innerHTML = list.map((l) => `<article class="law">
+    <div class="chips"><span class="chip">${AFFECTS[l.affects]}</span>${confChip(l.confidence)}</div>
+    <h4>${esc(l.name)}</h4>
+    <p><b>How it works:</b> ${esc(l.mechanism)}</p>
+    <p><b>Impact:</b> ${esc(l.impact)}</p>
+    ${tweaksFor(l.id).length ? `<div class="links">${tweaksFor(l.id).map((t) =>
+      `<div><span>${esc(t.short)}</span><span class="v">${impactText(t.result)}</span></div>`).join("")}</div>` : ""}
+  </article>`).join("");
+}
+const FILTERS = [["all", "All"], ["production", "Units built"], ["nonprofit_revenue", "Nonprofit revenue"], ["both", "Affects both"]];
+$("#law-filters").innerHTML = FILTERS.map(([k, t]) => `<button type="button" data-k="${k}" aria-pressed="${k === "all"}">${t}</button>`).join("");
+$("#law-filters").addEventListener("click", (e) => {
+  const b = e.target.closest("button"); if (!b) return;
+  lawFilter = b.dataset.k;
+  document.querySelectorAll("#law-filters button").forEach((x) => x.setAttribute("aria-pressed", x === b));
+  drawLaws();
+});
+drawLaws();
+
+/* ---------- 4. tweaks ---------- */
+function bars(host, rows, valueOf, fmt) {
+  rows = rows.filter((t) => valueOf(t) != null).sort((a, b) => valueOf(b) - valueOf(a));
+  if (!rows.length) { host.innerHTML = `<p class="h3-sub">Needs permit data.</p>`; return; }
+  const { max, step } = niceMax(Math.max(...rows.map(valueOf)), 4);
+  const ticks = []; for (let v = 0; v <= max + 1e-9; v += step) ticks.push(v);
+  host.innerHTML = `<div class="axis-row"><span></span><div class="ticks">${ticks.map((v) =>
+    `<span style="left:${v / max * 100}%">${pct(v, 0)}</span>`).join("")}</div><span></span></div>
+    <div class="bars">${rows.map((t, i) => `<div class="bar-row" tabindex="0" data-i="${i}">
+      <div class="lbl">${esc(t.short)}<small>${esc(t.mechanism)}</small></div>
+      <div class="track"><div class="fill ${t.overlaps_with ? "overlap" : ""}" style="width:${valueOf(t) / max * 100}%"></div></div>
+      <div class="v">${fmt(t)}</div></div>`).join("")}</div>`;
+  host.querySelectorAll(".bar-row").forEach((row) => {
+    const t = rows[+row.dataset.i], r = t.result;
+    bindTip(row, () => `<div class="t">${esc(t.tweak)}</div>
+      ${r.units != null ? `<div class="r"><span>Units</span><span>${r.units_range ? `${r.units_range[0]}–${r.units_range[1]}/yr` : `≈${num(r.units)}${r.per_site ? " per site" : r.one_time ? " one-time, on the 2024 bond" : "/yr"}`}</span></div>` : ""}
+      ${r.units_pct != null ? `<div class="r"><span>% of statewide permits</span><span>${pct(r.units_pct)}</span></div>` : ""}
+      ${r.stretch_pct != null ? `<div class="r"><span>Subsidy stretch</span><span>+${pct(r.stretch_pct)}</span></div>` : ""}
+      ${r.savings_usd != null ? `<div class="r"><span>Savings</span><span>${usd(r.savings_usd)}${r.per_site ? " per site" : "/yr"}</span></div>` : ""}
+      <div class="d">${esc(r.detail)}${t.overlaps_with ? " · Overlaps with quarterly rounds; do not add." : ""}</div>`);
+  });
+}
+$("#units-sub").textContent = S.latest_total ? `Baseline: ${num(S.latest_total)} units permitted in ${S.latest_year}` : "";
+bars($("#bars-units"), D.tweaks, (t) => t.result.units_pct, (t) => `+${pct(t.result.units_pct)}`);
+bars($("#bars-stretch"), D.tweaks, (t) => t.result.stretch_pct, (t) => `+${pct(t.result.stretch_pct)}`);
+
+$("#tweak-table").innerHTML = `<thead><tr><th>Tweak</th><th>Acts on</th><th>Who does it</th><th class="n">Units</th>
+  <th class="n">% of permits</th><th class="n">Subsidy stretch</th><th class="n">Savings</th><th>Basis</th></tr></thead><tbody>${
+  D.tweaks.map((t) => { const r = t.result; return `<tr>
+    <td><b>${esc(t.short)}</b><br><span style="color:var(--ink-2)">${esc(t.tweak)}</span></td>
+    <td>${esc(LAW_NAME[t.factor] || t.factor)}</td>
+    <td>${t.mechanism.split(/\s*\+\s*/).map((x) => `<span class="chip">${esc(x)}</span>`).join(" ")}</td>
+    <td class="n">${r.units_range ? `${r.units_range[0]}–${r.units_range[1]}` : r.units != null ? `≈${num(r.units)}${r.per_site ? " /site" : r.one_time ? " one-time" : ""}` : "—"}</td>
+    <td class="n">${r.units_pct != null ? `+${pct(r.units_pct)}` : "—"}</td>
+    <td class="n">${r.stretch_pct != null ? `+${pct(r.stretch_pct)}` : "—"}</td>
+    <td class="n">${usd(r.savings_usd)}${r.savings_usd != null && r.per_site ? " /site" : ""}</td>
+    <td style="color:var(--ink-2)">${esc(r.detail)}${t.overlaps_with ? " · <b>Overlaps with quarterly rounds; do not add.</b>" : ""}</td></tr>`; }).join("")}</tbody>`;
+
+$("#foot").innerHTML = `Generated ${esc(D.generated)}. Production data: U.S. Census Bureau Building Permits Survey (live). Homelessness: HUD Point-in-Time counts (AHAR). Affordable stock: HUD eGIS open data (LIHTC, public housing, assisted multifamily, vouchers). Cost benchmarks: GDG Providence AI Lab for Housing and RIPEC (2026). Rents, land, parking and escalation inputs are planning assumptions; edit <code>policy_data.json</code> to change them. Items marked Verify need checking against the cited source before publication.`;
+
+
+/* ---------- 5. homelessness gap ---------- */
+const PIT = D.pit || [], GAP = D.gap || {}, ST = D.stock;
+const H_SERIES = [
+  { key: "sheltered", name: "Sheltered", c: "var(--s1)" },
+  { key: "unsheltered", name: "Unsheltered", c: "var(--s2)" },
+];
+$("#h-legend").innerHTML = H_SERIES.map((s) => `<span><i class="sw" style="background:${s.c}"></i>${s.name}</span>`).join("");
+const drawHomeless = () => stackChart($("#chart-homeless"), PIT, H_SERIES,
+  { unit: "people", label: "Stacked columns of people counted homeless per year", empty: "Homelessness data unavailable. See the status pills at the top." });
+
+if (GAP.people) {
+  const ch = (x) => x == null ? "" : `<span class="delta ${x > 0 ? "bad" : "up"}">${x > 0 ? "▲" : "▼"} ${pct(Math.abs(x))} since ${GAP.baseline_year}</span>`;
+  $("#h-kpis").innerHTML = `
+    <div class="kpi"><span class="label">People homeless, ${GAP.year}</span><span class="value">${num(GAP.people)}</span>${ch(GAP.change_people)}</div>
+    <div class="kpi"><span class="label">Unsheltered</span><span class="value">${num(GAP.unsheltered)}</span>${ch(GAP.change_unsheltered)}</div>
+    <div class="kpi"><span class="label">Households needing a home</span><span class="value">${num(GAP.households)}</span>
+      <span class="delta">${num(GAP.individuals)} individuals + ${num(GAP.family_households)} families</span></div>
+    <div class="kpi"><span class="label">Chronically homeless individuals</span><span class="value">${num(GAP.chronic_individuals)}</span>
+      <span class="delta">need supportive housing</span></div>
+    <div class="kpi"><span class="label">Unfunded gap</span><span class="value">${usd(GAP.funding_gap)}</span>
+      <span class="delta">${num(GAP.unit_gap)} households after the 2024 bond</span></div>`;
+  const meter = (title, need, have, haveLabel, gapLabel) => {
+    const share = Math.min(1, have / need);
+    return `<div class="meter" role="img" aria-label="${esc(title)}: ${pct(share)} covered">
+      <div class="top"><b>${title}</b><span>${pct(share)} covered</span></div>
+      <div class="track2"><div class="fill2" style="width:${share * 100}%"></div></div>
+      <div class="cap"><span><i class="sw" style="background:var(--s1)"></i> ${haveLabel}</span><span><i class="sw" style="background:var(--track);outline:1px solid var(--axis)"></i> <b>Gap:</b> ${gapLabel}</span></div></div>`;
+  };
+  const m = [meter(`${num(GAP.households)} homeless households vs homes the 2024 bond can fund`, GAP.households, GAP.bond_units,
+    `≈${num(GAP.bond_units)} units from ${usd(D.derived.bond_2024)}`, `${num(GAP.unit_gap)} households · ${usd(GAP.funding_gap)}`)];
+  if (GAP.lihtc_avg) m.push(meter(`One year of new LIHTC homes vs homeless households`, GAP.households, GAP.lihtc_avg,
+    `≈${num(GAP.lihtc_avg)} LIHTC units/yr`, `${num(Math.max(0, GAP.households - GAP.lihtc_avg))} households · ${GAP.years_at_lihtc_pace.toFixed(1)} years at this pace`));
+  $("#gap-meters").innerHTML = m.join("");
+  $("#gap-notes").innerHTML = [
+    `<li><b>Cost to house everyone counted:</b> ${num(GAP.households)} households × ${usd(D.derived.gap_per_unit)} public subsidy per unit = ${usd(GAP.cost_to_house)}.</li>`,
+    GAP.people_added_per_year ? `<li><b>Growth:</b> about ${num(GAP.people_added_per_year)} more people homeless each year since ${GAP.baseline_year}, which is faster than the ${GAP.lihtc_avg ? `≈${num(GAP.lihtc_avg)}` : "current"} LIHTC units added per year. Only a share of those units is set aside for people leaving homelessness.</li>` : "",
+    GAP.lihtc_window ? `<li><b>LIHTC pace</b> is the ${esc(GAP.lihtc_window)}. HUD's database lags by several years.</li>` : "",
+    `<li>The gap assumes one unit per household. Many households need supportive services or rental subsidy too, which adds operating cost each year.</li>`,
+  ].join("");
+} else {
+  $("#gap-meters").innerHTML = `<div class="callout fail"><span class="ico">✕</span><div>Homelessness data unavailable. Check the HUD status pill at the top; the PIT file needs <code>python3 -m pip install pyxlsb</code>.</div></div>`;
+}
+
+function drawIndex() {
+  const host = $("#chart-index"); host.innerHTML = "";
+  const byYear = Object.fromEntries(P.map((r) => [r.year, r.total_units]));
+  const rows = PIT.filter((r) => byYear[r.year] != null).map((r) => ({ year: r.year, h: r.total, p: byYear[r.year] }));
+  if (rows.length < 2) { host.innerHTML = `<p class="h3-sub">Needs both permit and homelessness data.</p>`; return; }
+  const b = rows[0];
+  $("#idx-sub").textContent = `${b.year} = 100. Shows which grew faster, not their size`;
+  const S2 = [
+    { key: "hi", name: "People homeless", c: "var(--s2)" },
+    { key: "pi", name: "Homes permitted", c: "var(--s1)" },
+  ];
+  rows.forEach((r) => { r.hi = r.h / b.h * 100; r.pi = r.p / b.p * 100; });
+  $("#idx-legend").innerHTML = S2.map((s) => `<span><i class="sw" style="background:${s.c}"></i>${s.name}</span>`).join("");
+  const W = Math.max(300, host.clientWidth), H = 280, m = { t: 22, r: 52, b: 26, l: 44 };
+  const iw = W - m.l - m.r, ih = H - m.t - m.b;
+  const { max, step } = niceMax(Math.max(...rows.flatMap((r) => [r.hi, r.pi])));
+  const x = (i) => m.l + i * iw / (rows.length - 1), y = (v) => m.t + ih - v / max * ih;
+  const svg = el("svg", { viewBox: `0 0 ${W} ${H}`, role: "img", "aria-label": "Indexed lines of homelessness and homes permitted" }, host);
+  for (let v = 0; v <= max + 1e-9; v += step) {
+    el("line", { x1: m.l, x2: W - m.r, y1: y(v), y2: y(v), class: v ? "grid" : "base" }, svg);
+    el("text", { x: m.l - 6, y: y(v) + 4, "text-anchor": "end" }, svg).textContent = num(v);
+  }
+  el("line", { x1: m.l, x2: W - m.r, y1: y(100), y2: y(100), stroke: "var(--axis)", "stroke-width": 1 }, svg);
+  const labelEvery = Math.ceil(rows.length / Math.max(1, Math.floor(iw / 44)));
+  rows.forEach((r, i) => { if (i % labelEvery === 0 || i === rows.length - 1)
+    el("text", { x: x(i), y: H - 8, "text-anchor": "middle" }, svg).textContent = r.year; });
+  const li = rows.length - 1;
+  const ends = S2.map((s) => ({ s, y: y(rows[li][s.key]) })).sort((a, b) => a.y - b.y);
+  if (ends.length === 2 && ends[1].y - ends[0].y < 14) { ends[0].ly = ends[0].y - 7; ends[1].ly = ends[1].y + 7; }
+  S2.forEach((s) => {
+    const d = rows.map((r, i) => `${i ? "L" : "M"}${x(i)},${y(r[s.key])}`).join("");
+    el("path", { d, fill: "none", stroke: s.c, "stroke-width": 2, "stroke-linejoin": "round", "stroke-linecap": "round" }, svg);
+    el("circle", { cx: x(li), cy: y(rows[li][s.key]), r: 4, fill: s.c, stroke: "var(--surface)", "stroke-width": 2 }, svg);
+  });
+  ends.forEach((e) => { el("text", { x: x(li) + 8, y: (e.ly ?? e.y) + 4, class: "val" }, svg).textContent = num(rows[li][e.s.key]); });
+  const cross = el("line", { y1: m.t, y2: m.t + ih, stroke: "var(--axis)", "stroke-width": 1, visibility: "hidden" }, svg);
+  const hit = el("rect", { x: m.l, y: m.t, width: iw, height: ih, class: "hit" }, svg);
+  hit.addEventListener("mousemove", (e) => {
+    const bb = svg.getBoundingClientRect(), px = (e.clientX - bb.left) * W / bb.width;
+    const i = Math.max(0, Math.min(li, Math.round((px - m.l) / (iw / li))));
+    cross.setAttribute("x1", x(i)); cross.setAttribute("x2", x(i)); cross.setAttribute("visibility", "visible");
+    const r = rows[i];
+    showTip(e, `<div class="t">${r.year}</div>
+      <div class="r"><span><i class="sw" style="background:var(--s2)"></i>People homeless</span><span>${num(r.h)} (index ${num(r.hi)})</span></div>
+      <div class="r"><span><i class="sw" style="background:var(--s1)"></i>Homes permitted</span><span>${num(r.p)} (index ${num(r.pi)})</span></div>`);
+  });
+  hit.addEventListener("mouseleave", () => { hideTip(); cross.setAttribute("visibility", "hidden"); });
+}
+
+if (ST) {
+  const stockRows = [
+    { short: "HUD-assisted multifamily units", mechanism: `${num(ST.hud_multifamily.properties)} properties (Section 8, 202, 811)`, v: ST.hud_multifamily.assisted_units },
+    { short: "LIHTC low-income units", mechanism: `${num(ST.lihtc.projects)} tax-credit projects`, v: ST.lihtc.low_income_units },
+    { short: "Public housing units", mechanism: `${num(ST.public_housing.developments)} developments`, v: ST.public_housing.units },
+    { short: "Households using vouchers", mechanism: "Housing Choice Vouchers (rent paid in private homes)", v: ST.vouchers.households },
+  ].sort((a, b) => b.v - a.v);
+  const { max, step } = niceMax(stockRows[0].v);
+  const ticks = []; for (let v = 0; v <= max + 1e-9; v += step) ticks.push(v);
+  const hhRow = GAP.households ? `<div class="bar-row"><div class="lbl"><b>Homeless households (${GAP.year})</b><small>for scale</small></div>
+    <div class="track"><div class="fill" style="width:${GAP.households / max * 100}%;background:var(--s2)"></div></div><div class="v">${num(GAP.households)}</div></div>` : "";
+  $("#bars-stock").innerHTML = `<div class="axis-row"><span></span><div class="ticks">${ticks.map((v) =>
+    `<span style="left:${v / max * 100}%">${num(v)}</span>`).join("")}</div><span></span></div>
+    <div class="bars">${stockRows.map((r) => `<div class="bar-row"><div class="lbl">${esc(r.short)}<small>${esc(r.mechanism)}</small></div>
+      <div class="track"><div class="fill" style="width:${r.v / max * 100}%"></div></div><div class="v">${num(r.v)}</div></div>`).join("")}${hhRow}</div>`;
+} else {
+  $("#bars-stock").innerHTML = `<p class="h3-sub">HUD stock data unavailable.</p>`;
+}
+
+if (PIT.length) {
+  $("#pit-table").innerHTML = `<thead><tr><th>Year</th><th class="n">Total</th><th class="n">Sheltered</th><th class="n">Unsheltered</th>
+    <th class="n">Individuals</th><th class="n">Family households</th><th class="n">Chronic individuals</th></tr></thead><tbody>${
+    PIT.map((r) => `<tr><td>${r.year}</td><td class="n"><b>${num(r.total)}</b></td><td class="n">${num(r.sheltered)}</td><td class="n">${num(r.unsheltered)}</td>
+    <td class="n">${num(r.individuals)}</td><td class="n">${num(r.family_households)}</td><td class="n">${num(r.chronic_individuals)}</td></tr>`).join("")}</tbody>`;
+}
+
+/* ---------- responsive redraw ---------- */
+function drawCharts() { drawStack(); drawShare(); drawHomeless(); drawIndex(); }
+drawCharts();
+let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(drawCharts, 120); });
+</script>
+</body>
+</html>
