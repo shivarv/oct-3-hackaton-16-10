@@ -1,22 +1,82 @@
-# Env / secrets
+# ============================================================
+#  Secrets / environment
+# ============================================================
 .env
 .env.*
+*.local
 !.env.example
+*.pem
+*.key
+secrets/
 
-# Python
+# ============================================================
+#  Python (backend)
+# ============================================================
 __pycache__/
 *.py[cod]
+*.so
 .venv/
 venv/
+env/
+*.egg-info/
+.eggs/
+build/
 .pytest_cache/
 .ruff_cache/
+.mypy_cache/
+.coverage
+.coverage.*
+htmlcov/
+.ipynb_checkpoints/
 
-# Node
+# ============================================================
+#  Node / React (frontend)
+# ============================================================
 node_modules/
 dist/
-*.log
+dist-ssr/
+.vite/
+coverage/
+*.tsbuildinfo
+.eslintcache
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
 
-# OS / editor
+# ============================================================
+#  Database
+# ============================================================
+*.sqlite
+*.sqlite3
+*.db
+*.dump
+pgdata/
+
+# ============================================================
+#  Logs / temp
+# ============================================================
+logs/
+*.log
+tmp/
+*.tmp
+
+# ============================================================
+#  OS / editors
+# ============================================================
 .DS_Store
-.vscode/
+Thumbs.db
 .idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+*.swp
+*.sw?
+*.suo
+*.sln
+
+# Claude Code local settings (keep shared .claude/settings.json)
+.claude/settings.local.json
+
+# RI housing report output
+tools/ri_housing_report/out/

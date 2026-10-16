@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -sI https://www2.census.gov/econ/bps/State/st2024a.txt)",
+      "Bash(curl -s \"https://api.census.gov/data/2023/acs/acs1?get=NAME,B25001_001E&for=state:44\")",
+      "Bash(curl -s -w \"\\\\nHTTP %{http_code}\\\\n\" \"https://api.census.gov/data/2023/acs/acs1?get=NAME,B25001_001E&for=state:44\")",
+      "Bash(curl -s https://www2.census.gov/econ/bps/State/st2024a.txt)",
+      "Bash(curl -sI https://www2.census.gov/econ/bps/State/st2015a.txt)",
+      "Bash(curl -sI https://www2.census.gov/econ/bps/State/st2025a.txt)",
+      "Bash(curl -sL -w \"\\\\nHTTP %{http_code} %{url_effective}\\\\n\" \"https://api.census.gov/data/2023/acs/acs1?get=NAME,B25001_001E,B25064_001E&for=state:44\")",
+      "Bash(curl -s https://www2.census.gov/econ/bps/State/st2025a.txt)",
+      "Bash(curl -s https://www2.census.gov/econ/bps/State/)",
+      "Bash(backend/.venv/bin/ruff check *)",
+      "Bash(python3 tools/ri_housing_report/report.py --ai)"
+    ]
+  }
+}
